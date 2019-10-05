@@ -1,9 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.configure("2") do |config|
+Vagrant.configure("2") do |config
+  # allow access to a folder on the host machine
+  #config.vm.synced_folder "c:\\", "/host"
+  config.vm.synced_folder "/tmp", "/host"
   config.vm.box = "ubuntu/trusty64"
   config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 2375, host: 2375
   # config.vm.provision "shell", path: "script.sh"
   config.vm.provision "shell", inline: $script
 end
@@ -36,7 +40,14 @@ sudo add-apt-repository \
   
 apt-get update -y		
 apt-get install -y docker-ce
-  
+echo "########################################################"
+echo "### Enable Docker API ##################################"
+echo "########################################################"
+sed -i '/ExecStart/c\ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock' /lib/systemd/system/docker.service
+systemctl daemon-reload
+systemctl restart docker.service
+echo 
+
 echo "########################################################"
 echo "### Install Docker Compose #############################"
 echo "########################################################"
